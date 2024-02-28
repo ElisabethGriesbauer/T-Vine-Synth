@@ -1,0 +1,314 @@
+---
+title: "execute"
+author: "anonymous"
+date: "2024-02-01"
+output: pdf_document
+---
+
+This Rmd is generating 50 synthetic data sets (of same size as the real data) for truncation levels 1, 5, 10, 15, 20 and 26 (which is equal to no truncation) from a C-vine using the real-world SUPPORT2 data set. The function used to generate synthetic data from a C-vine is called "generate_synth_data.R". Then these synthetic data are evaluated in terms of utility using the function defined in "evluate_synth_data_testdata.R". Using the privacy attack code by Stadler et. al. in the repository "synthetic_data_release-master", the privacy of the synthetic data are evaluated and the results plotted here.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(dplyr)
+library(rvinecopulib)
+library(data.table)
+library(pROC)
+library(ggplot2)
+library(doBy)
+library(tidyr)
+library(latex2exp)
+library(randomForest)
+library(cowplot)
+library(RColorBrewer)
+library(stringr)
+
+```
+
+## Loading Data and Functions
+
+```{r}
+# function to generate synthetic data "generate_synth_data_all_truncs":
+source("generate_synth_data.R")
+
+# function to evaluate synthetic data in terms of utility "evaluate_synth_data_testdata":
+source("evaluate_synth_data_testdata.R")
+
+# function for rearranging utility results "making_tables":
+source("making_tables.R")
+
+# reading real and test data
+real_data <- read.csv("real_support2_small.csv")
+test_data <- read.csv("test_support2_small.csv")
+```
+
+
+## Preparing Real Data and Defining Covariate Ordering
+
+```{r}
+n <- dim(real_data)[1]
+d <- dim(real_data)[2]
+
+# no. synthetic data sets of size n generated per model
+p_synth <- 50
+
+trunc_levels <- c(1, seq(5,20,5), 26)
+factor_position <- c(d)
+vine_estimation <- "par"
+
+
+# the covariate ordering was already prepared in the pre-processing step of the 
+## SUPPORT2 data: Y has to be on the last index, the order corresponds to the
+## column names
+attribute_names <- colnames(real_data)
+
+# preparing real data and test data
+real_data$Y <- real_data$Y %>% as.factor()
+real_data <- as.data.table(real_data)
+
+test_data$Y <- test_data$Y %>% as.factor()
+test_data <- as.data.table(test_data)
+```
+
+
+## Generating Syntheti Data for Specified Truncation Levels from a C-vine
+
+```{r}
+set.seed(456)
+list_synth_data <- generate_synth_data_all_truncs(real_data, p_synth, attribute_names, factor_position, vine_estimation, vine_topology = "Cvine", trunc_levels = trunc_levels)
+
+rm(factor_position, vine_estimation, attribute_names)
+```
+
+
+## Evaluating the Utility of the Synthetic Data with a Random Forest Classifier
+
+```{r}
+set.seed(4562)
+utility_per_trunc <- list()
+for (t in 1:length(list_synth_data)){
+  utility_per_trunc[[t]] <- evaluate_synth_data_testdata(real_data, list_synth_data[[t]], test_data, p_synth, classifier = "rand_forest")
+  names(utility_per_trunc)[t] <- names(list_synth_data)[t]
+}
+
+names(utility_per_trunc) <- names(list_synth_data)
+
+saveRDS(utility_per_trunc, file = "utility_realsupport2_small_Cvine_randForest_p50_testdata.RData")
+```
+
+
+## Benchmark: Utility of the Same Classifier Trained on Real Data
+
+```{r}
+set.seed(456)
+data <- as.data.frame(real_data)
+data$Y <- data$Y %>% as.factor()
+
+t_data <- as.data.frame(test_data)
+t_data$Y <- t_data$Y %>% as.factor()
+
+rf.err.rate <- function(x){
+  fit <- randomForest(Y ~ ., data = data, ntree = x, mtry = floor(sqrt(d - 1)), replace = T, type = "classification")
+  y <- mean(fit$err.rate[,1])
+  return(y)
+}
+
+obb.err.mean <- vapply(X = seq(from=100, to=2000, by=100), FUN = rf.err.rate, numeric(1))
+ntrees.opt <- seq(from=100, to=2000, by=100)[which(min(unlist(obb.err.mean)) == unlist(obb.err.mean))]
+
+
+rf.model <- randomForest(Y ~ ., data = data, ntree = ntrees.opt, 
+                         mtry = floor(sqrt(d - 1)), nodesize = 1, replace = T, type = "classification")
+predictions <- predict(rf.model, newdata = t_data[, -d], type = "response", 
+                       norm.votes = T) %>% as.numeric()
+
+AUCreal <- auc(response = t_data$Y, predictor = as.numeric(predictions)- 1)
+print("AUC:"); AUCreal
+```
+
+
+## Rearranging Utility Results of C-Vine Generated Synthetic Data
+```{r}
+modelname <- "Cvine"
+names(utility_per_trunc) <- paste0(modelname, "_trunc_", names(utility_per_trunc))
+resultsCvine <- making_tables(utility_per_trunc, as_matrix = T)
+models <- colnames(resultsCvine)
+cnames <- row.names(resultsCvine)
+resultsCvine <- t(resultsCvine)
+colnames(resultsCvine) <- cnames
+row.names(resultsCvine) <- NULL
+resultsCvine <- resultsCvine %>% as.data.frame()
+resultsCvine$model <- models
+
+rm(models, cnames)
+
+resultsCvine <- resultsCvine %>% separate(model, into = c("model", "t", "trunc"), sep = "_")
+resultsCvine$t <- NULL
+resultsCvine[, c("model", "trunc")] <- lapply(resultsCvine[, c("model", "trunc")], factor)
+
+subdf <- resultsCvine[resultsCvine$model == "Cvine",]
+med <- summaryBy(AUC_synth ~ (trunc), data = subdf, FUN = list(median)) %>% as.data.frame()
+```
+
+
+## Plotting Utility Results
+
+```{r}
+
+ggplot(subdf, aes(x = trunc, y = AUC_synth)) +
+  geom_boxplot(width = 0.4, linewidth = 1.5, position=position_dodge(0.6), fill = '#0099FF') +
+  labs(x ="truncation level", y = TeX(r'($AUC(y^*, \hat{w}^*)$)')) +
+  theme_minimal() +
+  theme(text = element_text(size = 30), legend.position = "bottom",
+        legend.box = "vertical", plot.caption = element_text(hjust = 0),
+        axis.text.x = element_text(size=30),
+        axis.text.y = element_text(size=30),
+        legend.text = element_text(size = 40),
+        plot.margin=unit(c(2,0,0.5,0.5), 'cm')) +
+  scale_y_continuous(breaks = seq(from = 0.5, to = 0.8, by = 0.1), limits = c(0.45, 0.8)) +
+  geom_path(data = med, aes(x = trunc, y = AUC_synth.median), color = '#0099FF', group=1, size = 2) +
+  scale_x_discrete(labels = c(paste(unique(subdf$trunc)[-length(unique(subdf$trunc))]), 'no')) +
+  geom_hline(yintercept=AUCreal, alpha = 0.8, color = '#FF6633', size=2) +
+  geom_text(x = 1.5, y = (AUCreal+0.07), label = TeX(r'($AUC(y^*, \hat{y}^*)$)'), size = 10, color = '#FF6633') +
+  panel_border()
+```
+
+
+## Reading Attribute Inference Attack Results Produced in Python
+
+```{r}
+setwd("./synthetic_data_release-master")
+after_trunc <- "_MSE"
+trunc_levels <- c("1", paste(seq(5,20,5)), "26")
+d <- dim(real_data)[2] - 1
+how_many <- 10*1*8*3 # nIter x no. genModels x no. TargetID x no. SensitiveAttribute
+
+
+reading <- function(before_trunc, after_trunc, trunc_levels, how_many){
+  results <- cbind( fread(paste0(before_trunc, trunc_levels[1], after_trunc, ".csv", sep = "")), "trunc" = rep(trunc_levels[1], how_many))
+  
+  for (i in trunc_levels[2:(length(trunc_levels)-1)]){
+    results <- rbind(results, cbind( fread(paste0(before_trunc, i, after_trunc, ".csv", sep = "")), "trunc" = rep(i, how_many)))
+  }
+  
+  results = rbind(results, cbind( fread(paste0(before_trunc, trunc_levels[length(trunc_levels)], after_trunc, ".csv", sep = "")), "trunc" = rep("none", how_many)))
+  return(results)
+}
+```
+
+```{r}
+resultsVines <- reading(before_trunc = "synthetic_data_release-master/results_inference_realsupport2_small_totcst_50_0126_trunc", after_trunc = after_trunc, trunc_levels = trunc_levels, how_many = how_many)
+```
+
+```{r}
+factors = c("Dataset", "SensitiveAttribute", "TargetModel")
+resultsVines[ , (factors) := lapply(.SD, factor, ordered = T), .SDcols = factors]
+resultsVines[ , TargetID := factor(TargetID, levels = resultsVines[, unique(TargetID)], ordered = T)]
+resultsVines[ , trunc := factor(trunc, levels = c("1", paste(seq(5,20,5)), "none"), ordered = T)]
+
+rm(factors)
+
+
+## sample average targets
+set.seed(1234567)
+sampled_targets <- sample(1:dim(real_data)[1], 4, replace = F)
+sampled_targets <- sampled_targets[order(sampled_targets)] # ordering them by hand
+
+resultsVines[, "sampled" := (TargetID %in% paste0("ID", sampled_targets -1, sep = ""))]
+
+
+subres = resultsVines[TargetModel == "Cvine"]
+med <- subres[, .(median(MSEsIn)), by = .(sampled, trunc)]
+
+
+ggplot(med, aes(x = trunc, y = V1)) +
+  labs(x ="truncation level", y = TeX(r'($MSE_S(x_{t,s} | s_t = 1)$)'), fill = 'target observation') +
+  guides(colour = "none") +
+  theme_minimal() +
+  theme(text = element_text(size = 30), legend.position = "left",
+        legend.box = "vertical", plot.caption = element_text(hjust = 0),
+        axis.text.x = element_text(size=30),
+        axis.text.y = element_text(size=30),
+        legend.text = element_text(size = 30),
+        plot.margin=unit(c(0.5,0,0.5,0), 'cm')) +
+  geom_path(data = med, aes(x = trunc, y = V1, group = sampled, colour = sampled), linewidth = 1) +
+  geom_boxplot(data = subres, aes(y = MSEsIn, group = interaction(trunc, sampled), fill = sampled), width = 0.7, size = 1, position=position_dodge(0.8), alpha = 0.8) +
+  scale_x_discrete(labels = c("1", paste(seq(5,20,5)), 'no')) +
+  scale_fill_manual(labels = c("outlier", "randomly sampled"), values = c('#FF6633', '#0099FF')) +
+  scale_color_manual(labels = c("outlier", "randomly sampled"), values = c('#FF6633', '#0099FF')) +
+  scale_y_continuous(breaks = seq(from = 0, to = 25, by = 5), limits = c(0, 25)) +
+  panel_border()
+```
+
+
+## Privacy-Utility Plot
+```{r}
+# reading the utility results if evaluation takes too lomg:
+utility_per_trunc <- readRDS("utility_realsupport2_small_Cvine_randForest_p50_testdata.RData")
+
+#rearranging
+names(utility_per_trunc) <- paste0("Cvine_trunc_", names(utility_per_trunc))
+resultsCvine <- making_tables(utility_per_trunc, as_matrix = T)
+models <- colnames(resultsCvine)
+cnames <- row.names(resultsCvine)
+resultsCvine <- t(resultsCvine)
+colnames(resultsCvine) <- cnames
+row.names(resultsCvine) <- NULL
+resultsCvine <- resultsCvine %>% as.data.frame()
+resultsCvine$model <- models
+
+rm(models, cnames)
+
+resultsCvine <- resultsCvine %>% separate(model, into = c("model", "t", "trunc"), sep = "_")
+resultsCvine$t <- NULL
+resultsCvine[, c("model", "trunc")] <- lapply(resultsCvine[, c("model", "trunc")], factor)
+resultsCvine <- resultsCvine %>% as.data.table()
+resultsCvine[, trunc := factor(trunc, levels = paste(c(1, seq(5,20,5), 26)), ordered = T)]
+
+subdf <- resultsCvine[resultsCvine$model == "Cvine",]
+med <- summaryBy(AUC_synth ~ (trunc), data = subdf, FUN = list(median)) %>% as.data.frame()
+
+dfCvine <- as.data.frame(matrix(, nrow = length(trunc_levels), ncol = 4))
+colnames(dfCvine) <- c("utility", "privAIA", "privMIA", "model")
+
+# utility results to plotting df
+dfCvine$utility <- med$AUC_synth.median
+dfCvine$model <- paste0("Cvine_", med$trunc, sep = "")
+
+# AIA results to plotting df
+med <- subres[, .(median(MSEsIn)), by = .(sampled, trunc)]
+dfCvine$privAIA <- med$V1[med$sampled == F]
+
+
+dfCvine$utility <- dfCvine$utility %>% as.numeric()
+dfCvine$privAIA <- dfCvine$privAIA %>% as.numeric()
+dfCvine$privMIA <- dfCvine$privMIA %>% as.numeric()
+dfCvine$model <- factor(dfCvine$model, ordered = T, levels = unique(dfCvine$model) )
+
+color_palette_cvine <- c(brewer.pal(7, "Blues")[2:7])
+desired_model_order <- c(unique(dfCvine$model))
+
+
+
+ggplot(data = dfCvine, aes(x=utility, y=privAIA, color = factor(model, ordered = T))) +
+  geom_point(size = 5) +
+  geom_path(group=1, color = "grey", size = 1) +
+  scale_y_continuous(breaks = seq(from = 0, to = 4.5, by = 0.5), limits = c(0, 4.7)) +
+  scale_x_continuous(breaks = seq(from = 0.67, to = 0.69, by = 0.01), limits = c(0.67, 0.694)) +
+  # scale_color_manual(values = color_palette_cvine) +
+  theme_minimal() +
+  panel_border() +
+  scale_color_manual(values = color_palette_cvine, limits = unique(dfCvine$model), labels = c( paste0( "Cvine trunc ", c(1,seq(5,20,5))), "Cvine no trunc")) +
+  labs(x = "utility (AUC)", y = "AIA privacy (MSE)", color = "Model:") +
+  # guides(colour = "none") +
+  theme_minimal() +
+  theme(text = element_text(size = 30), legend.position = "left",
+        legend.box = "vertical", plot.caption = element_text(hjust = 0),
+        axis.text.x = element_text(size=30),
+        axis.text.y = element_text(size=30),
+        legend.text = element_text(size = 30)) +
+  panel_border()
+  
+
+```
