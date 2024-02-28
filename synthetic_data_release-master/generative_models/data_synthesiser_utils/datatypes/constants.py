@@ -1,6 +1,0 @@
-CONTINUOUS = 'Continuous'
-CATEGORICAL = 'Categorical'
-ORDINAL = 'Ordinal'
-INTEGER = 'Integer'
-FLOAT = 'Float'
-STRING = 'String'
