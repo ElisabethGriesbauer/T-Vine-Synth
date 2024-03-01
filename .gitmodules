@@ -1,0 +1,3 @@
+[submodule "synthetic_data_release"]
+	path = synthetic_data_release
+	url = https://github.com/ElisabethGriesbauer/synthetic_data_release.git
