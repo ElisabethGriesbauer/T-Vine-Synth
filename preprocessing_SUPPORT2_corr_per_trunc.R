@@ -10,7 +10,7 @@ library(stats)
 
 library(readr)
 # https://archive.ics.uci.edu/dataset/880/support2
-raw_data <- read_csv("raw_support2.csv")
+raw_data <- read_csv("./data/raw/raw_support2.csv")
 raw_data <- data.table(raw_data)
 
 factor_positions <- c(3,4,5,8,9,11,12,18,26,28,29,45,47)
@@ -23,7 +23,9 @@ summary(raw_data)
 
 
 ## sub-setting the columns of support2 data
-exclude <- c("id", "sex", "dzgroup", "dzclass", "edu", "income", "avtisst", "race", "prg6m", "dnr", "glucose", "glucose", "urine", "adlp", "sfdm2")
+exclude <- c("id", "sex", "dzgroup", "dzclass", "edu", "income", "avtisst", "race", 
+             "prg6m", "dnr", "glucose", "glucose", "urine", "adlp", "sfdm2")
+
 sub_data <- raw_data[, -which(names(raw_data) %in% exclude), with = FALSE]
 
 # exclude missing values
@@ -60,8 +62,8 @@ write_s_r_data <- function(s_data, dir, name){
   write.csv(s_data, paste(name, ".csv", sep = ""), row.names = F)
 }
 
-write_s_r_data(real_data %>% as.data.frame(), name = "real_support2_small")
-write_s_r_data(test_data %>% as.data.frame(), name = "test_support2_small")
+write_s_r_data(real_data %>% as.data.frame(), name = "./data/preprocessed/real_support2_small")
+write_s_r_data(test_data %>% as.data.frame(), name = "./data/preprocessed/test_support2_small")
 
 
 n <- dim(real_data)[1]
@@ -139,7 +141,7 @@ for (t in 1:length(trunc_levels)) {
 }
 
 
-name <- paste0("estKendallstau_realsupport2Small.png", sep = "")
+name <- paste0("./figures/estKendallstau_realsupport2Small.png", sep = "")
 png(name)
 corrplot(cor(real_data[, ..numerics], method = "kendall"), method="color")
 dev.off()

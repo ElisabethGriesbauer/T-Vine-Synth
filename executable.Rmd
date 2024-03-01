@@ -31,17 +31,17 @@ library(stringr)
 
 ```{r}
 # function to generate synthetic data "generate_synth_data_all_truncs":
-source("generate_synth_data.R")
+source("./src/generate_synth_data.R")
 
 # function to evaluate synthetic data in terms of utility "evaluate_synth_data_testdata":
-source("evaluate_synth_data_testdata.R")
+source("./src/evaluate_synth_data_testdata.R")
 
 # function for rearranging utility results "making_tables":
-source("making_tables.R")
+source("./src/making_tables.R")
 
 # reading real and test data
-real_data <- read.csv("real_support2_small.csv")
-test_data <- read.csv("test_support2_small.csv")
+real_data <- read.csv("./data/preprocessed/real_support2_small.csv")
+test_data <- read.csv("./data/preprocessed/test_support2_small.csv")
 ```
 
 
@@ -95,7 +95,7 @@ for (t in 1:length(list_synth_data)){
 
 names(utility_per_trunc) <- names(list_synth_data)
 
-saveRDS(utility_per_trunc, file = "utility_realsupport2_small_Cvine_randForest_p50_testdata.RData")
+saveRDS(utility_per_trunc, file = "./output/utility_realsupport2_small_Cvine_randForest_p50_testdata.RData")
 ```
 
 
