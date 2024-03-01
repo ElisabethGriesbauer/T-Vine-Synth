@@ -140,15 +140,8 @@ write_s_r_data <- function(s_data, dir, name){
   write.csv(s_data, paste(name, ".csv", sep = ""), row.names = F)
 }
 
-write_s_r_data(real_data_I %>% as.data.frame(), name = "real_data_I_d20")
+write_s_r_data(real_data_I %>% as.data.frame(), name = "./data/preprocessed/real_data_I_d20")
 
-
-## read the data ##
-###################
-#-------------------------------------------------------------------------------
-
-library(readr)
-real_data_I <- read.csv("real_data_I_d20.csv")
 
 
 ## sample target patients ##
@@ -188,4 +181,4 @@ colnames(real_data_I_test) <- names
 corrplot(cor(real_data_I_test), method="color")
 
 # writing
-write_s_r_data(real_data_I_test %>% as.data.frame(), name = "real_data_I_d20_test")
+write_s_r_data(real_data_I_test %>% as.data.frame(), name = "./data/preprocessed/real_data_I_d20_test")

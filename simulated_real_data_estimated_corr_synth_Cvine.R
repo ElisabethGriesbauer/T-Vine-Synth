@@ -11,11 +11,16 @@ library(randomForest)
 library(cowplot)
 library(corrplot)
 
-real_data <- read.csv("real_data_I_d20.csv")
+real_data <- read.csv("./data/preprocessed/real_data_I_d20.csv")
 real_data <- as.data.table(real_data)
 
 n <- dim(real_data)[1]
 d <- dim(real_data)[2]
+
+name <- "./figures/corr_real_data_I_d20.png"
+png(name)
+corrplot(cor(real_data[, -d, with = F]), method="color")
+dev.off()
 
 p_synth <- 1
 
@@ -61,12 +66,9 @@ for (t in c(1:(d-1))){
   u_synth <- rvinecop(n * p_synth, vmodel) %>% data.table()
   names(u_synth) <- primary
   
-  name <- paste0("simulated_real_data_estimated_correlation_on_synth_data_Cvine_trunc", t, ".png", sep = "")
+  name <- paste0("./figures/simulated_real_data_estimated_correlation_on_synth_data_Cvine_trunc", t, ".png", sep = "")
   png(name)
   corrplot(cor(u_synth), method="color")
   dev.off()
   
 }
-
-
-corrplot(cor(real_data[, -d]), method="color")
