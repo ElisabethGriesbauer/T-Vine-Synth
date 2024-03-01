@@ -9,6 +9,7 @@ This Rmd is generating 50 synthetic data sets (of same size as the real data) fo
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
 
 library(readr)
 library(dplyr)

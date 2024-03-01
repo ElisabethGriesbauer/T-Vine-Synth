@@ -39,8 +39,6 @@ cleaned_real_data[, dementia := NULL]
 cleaned_real_data[, diabetes := NULL]
 cleaned_real_data[, adls := NULL]
 cleaned_real_data[, adlsc := NULL]
-cleaned_real_data[, adls := NULL]
-cleaned_real_data[, adlsc := NULL]
 
 
 # create test data, i.e. 20% of the data that is not touched before utility evaluation
@@ -58,7 +56,7 @@ names(test_data)[length(names(test_data))] <- "Y"
 
 # writing data
 write_s_r_data <- function(s_data, dir, name){
-  s_data$Y <- s_data$Y %>% as.numeric() %>% as.integer() -1 
+  s_data$Y <- s_data$Y %>% as.numeric() %>% as.integer()
   write.csv(s_data, paste(name, ".csv", sep = ""), row.names = F)
 }
 
