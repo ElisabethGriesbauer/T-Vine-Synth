@@ -179,7 +179,7 @@ ggplot(subdf, aes(x = trunc, y = AUC_synth)) +
 ## Reading Attribute Inference Attack Results Produced in Python
 
 ```{r}
-setwd("./synthetic_data_release-master")
+
 after_trunc <- "_MSE"
 trunc_levels <- c("1", paste(seq(5,20,5)), "26")
 d <- dim(real_data)[2] - 1
@@ -199,7 +199,7 @@ reading <- function(before_trunc, after_trunc, trunc_levels, how_many){
 ```
 
 ```{r}
-resultsVines <- reading(before_trunc = "synthetic_data_release-master/results_inference_realsupport2_small_totcst_50_0126_trunc", after_trunc = after_trunc, trunc_levels = trunc_levels, how_many = how_many)
+resultsVines <- reading(before_trunc = "output/results_inference_realsupport2_small_totcst_50_0126_trunc", after_trunc = after_trunc, trunc_levels = trunc_levels, how_many = how_many)
 ```
 
 ```{r}
