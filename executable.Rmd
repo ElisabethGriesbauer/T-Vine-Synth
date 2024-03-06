@@ -245,9 +245,6 @@ ggplot(med, aes(x = trunc, y = V1)) +
 
 ## Privacy-Utility Plot
 ```{r}
-# reading the utility results if evaluation takes too lomg:
-utility_per_trunc <- readRDS("utility_realsupport2_small_Cvine_randForest_p50_testdata.RData")
-
 #rearranging
 names(utility_per_trunc) <- paste0("Cvine_trunc_", names(utility_per_trunc))
 resultsCvine <- making_tables(utility_per_trunc, as_matrix = T)

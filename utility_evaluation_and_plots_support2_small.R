@@ -11,11 +11,11 @@ library(randomForest)
 library(cowplot)
 
 
-source("evaluate_synth_data_testdata.R")
-source("generate_synth_data.R")
-source("making_tables.R")
-real_data <- read.csv("real_support2_small.csv")
-test_data <- read.csv("test_support2_small.csv")
+source("./src/evaluate_synth_data_testdata.R")
+source("./src/generate_synth_data.R")
+source("./src/making_tables.R")
+real_data <- read.csv("./data/preprocessed/real_support2_small.csv")
+test_data <- read.csv("./data/preprocessed/test_support2_small.csv")
 
 
 
