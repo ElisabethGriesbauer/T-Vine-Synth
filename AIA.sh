@@ -19,7 +19,7 @@ for index in "${window_indices[@]}"; do
     tmux send-keys -t $SESSION:$index "conda activate $CONDA_ENV" Enter
 
     # Execute the command with the running index substituted
-    command="python ./synthetic_data_release/inference_cli.py -D ./synthetic_data_release/data/real_support2_small -RC ./synthetic_data_release/tests/inference/runconfig_totcst_50_0126_trunc${index}.json -O ./output/inference_realsupport2_small_totcstOutlier_trunc${index} -P 0"
+    command="python ./synthetic_data_release/inference_cli.py -D ./data/real_support2_small -RC ./tests/inference/runconfig_totcst_50_0126_trunc${index}.json -O d./output/inference_realsupport2_small_totcstOutlier_trunc${index}"
     tmux send-keys -t $SESSION:$index "$command" Enter
 done
 
