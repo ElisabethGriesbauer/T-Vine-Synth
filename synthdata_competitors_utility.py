@@ -1,5 +1,6 @@
-# import os 
-# os.chdir('./synthetic_data_release')
+import sys
+sys.path.append('./synthetic_data_release')
+
 from synthetic_data_release.utils.datagen import load_local_data_as_df
 import numpy as np
 from synthetic_data_release.generative_models.data_synthesiser import PrivBayes
@@ -33,7 +34,7 @@ random.seed(178)
 ctgan = CTGAN(metadata=metadata, epochs = 400, batch_size = 100)
 ctgan.fit(rawPop)
 synth_data_ctgan = ctgan.generate_samples(50*rawPop.shape[0])
-synth_data_ctgan.to_csv("./data/synthdata_utility_competitors/ynth_data_CTGAN_real_support2_small.csv", index=False)
+synth_data_ctgan.to_csv("./data/synthdata_utility_competitors/synth_data_CTGAN_real_support2_small.csv", index=False)
 
 
 # TVAE

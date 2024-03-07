@@ -1,4 +1,8 @@
+import sys
+sys.path.append('./synthetic_data_release')
+
 from synthetic_data_release.utils.analyse_results import load_results_inference
+
 
 directory = "./output/"
 
