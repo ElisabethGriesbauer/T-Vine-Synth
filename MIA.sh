@@ -20,8 +20,20 @@ for index in "${window_indices[@]}"; do
 
     # Execute the command with the running index substituted
     command="python ./synthetic_data_release/linkage_cli.py -D ./data/real_support2_small -RC ./tests/linkage/runconfig_totcst_outliers_trunc${index}.json -O ./output/linkage_realsupport2_small_totcstOutlier_trunc${index}"
-    tmux send-keys -t $SESSION:$index "$command" Enter
+    
+    # Run the command in the pane and wait for it to finish
+    tmux send-keys -t $SESSION:$index "$command; tmux wait -S Window${index}_done" Enter
+
 done
 
-# Attach to the tmux session
-tmux attach-session -t $SESSION
+# Wait for all tmux windows to finish
+for index in "${window_indices[@]}"; do
+    tmux wait "Window${index}_done"
+done
+
+# Kill tmux session
+tmux kill-session -t $SESSION
+
+# Exit with success code
+echo "MIA finished"
+exit 0
