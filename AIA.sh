@@ -19,9 +19,21 @@ for index in "${window_indices[@]}"; do
     tmux send-keys -t $SESSION:$index "conda activate $CONDA_ENV" Enter
 
     # Execute the command with the running index substituted
-    command="python ./synthetic_data_release/inference_cli.py -D ./data/real_support2_small -RC ./tests/inference/runconfig_totcst_50_0126_trunc${index}.json -O d./output/inference_realsupport2_small_totcstOutlier_trunc${index}"
-    tmux send-keys -t $SESSION:$index "$command" Enter
+    command="python ./synthetic_data_release/inference_cli.py -D ./data/real_support2_small -RC ./tests/inference/runconfig_totcst_50_0126_trunc${index}.json -O ./output/inference_realsupport2_small_totcstOutlier_trunc${index}"
+
+    # Run the command in the pane and wait for it to finish
+    tmux send-keys -t $SESSION:$index "$command; tmux wait -S Window${index}_done" Enter
+
 done
 
-# Attach to the tmux session
-tmux attach-session -t $SESSION
+# Wait for all tmux windows to finish
+for index in "${window_indices[@]}"; do
+    tmux wait "Window${index}_done"
+done
+
+# Kill tmux session
+tmux kill-session -t $SESSION
+
+# Exit with success code
+echo "AIA finished"
+exit 0
