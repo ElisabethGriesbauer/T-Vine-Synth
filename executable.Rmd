@@ -155,7 +155,7 @@ med <- summaryBy(AUC_synth ~ (trunc), data = subdf, FUN = list(median)) %>% as.d
 
 ## Plotting Utility Results Cvine
 
-```{r}
+```{r, warning = F}
 
 gCvine <- ggplot(subdf, aes(x = trunc, y = AUC_synth)) +
   geom_boxplot(width = 0.4, linewidth = 1.5, position=position_dodge(0.6), fill = '#0099FF') +
@@ -229,7 +229,7 @@ medPB <- summaryBy(AUC_synth ~ eps, data = df, FUN = list(median)) %>% as.data.f
 
 ## Plotting Utility Results PrivBayes
 
-```{r}
+```{r, warning = F}
 
 gPB <- ggplot(df, aes(x = eps, y = AUC_synth)) + 
   geom_boxplot(width = 0.4, linewidth = 1.5, position=position_dodge(0.6), fill = '#0099FF') +
@@ -255,8 +255,8 @@ gPB
 
 ```{r}
 # reading in PrivBayes synthetic data generated beforehand in python
-synth_data_ctgan <- read.csv("synth_data_CTGAN_real_support2_small.csv")
-synth_data_tvae <- read.csv("synth_data_TVAE_real_support2_small.csv")
+synth_data_ctgan <- read.csv("./data/synthdata_utility_competitors/synth_data_CTGAN_real_support2_small.csv")
+synth_data_tvae <- read.csv("./data/synthdata_utility_competitors/synth_data_TVAE_real_support2_small.csv")
 
 synth_data_ctgan$Y <- synth_data_ctgan$Y %>% as.factor()
 synth_data_tvae$Y <- synth_data_tvae$Y %>% as.factor()
@@ -310,13 +310,13 @@ gCT <- ggplot(resultsCT, aes(x = model, y = AUC_synth)) +
   geom_hline(yintercept=AUCreal, alpha = 0.8, color = "#FF6633", size=2)  + # #990066
   panel_border()
 
-gTV
+gCT
 ```
 
 
 ## Putting Utility Plots Together
 
-```{r}
+```{r, warning = F}
 plot_grid(
   gCvine, gCT, gPB,
   labels = c("CVINE", "CTGAN  TVAE", "PRIVBAYES"),
@@ -406,21 +406,6 @@ ggplot(med, aes(x = trunc, y = V1)) +
 ## Privacy-Utility Plot
 ```{r}
 #rearranging
-names(utility_per_trunc) <- paste0("Cvine_trunc_", names(utility_per_trunc))
-resultsCvine <- making_tables(utility_per_trunc, as_matrix = T)
-models <- colnames(resultsCvine)
-cnames <- row.names(resultsCvine)
-resultsCvine <- t(resultsCvine)
-colnames(resultsCvine) <- cnames
-row.names(resultsCvine) <- NULL
-resultsCvine <- resultsCvine %>% as.data.frame()
-resultsCvine$model <- models
-
-rm(models, cnames)
-
-resultsCvine <- resultsCvine %>% separate(model, into = c("model", "t", "trunc"), sep = "_")
-resultsCvine$t <- NULL
-resultsCvine[, c("model", "trunc")] <- lapply(resultsCvine[, c("model", "trunc")], factor)
 resultsCvine <- resultsCvine %>% as.data.table()
 resultsCvine[, trunc := factor(trunc, levels = paste(c(1, seq(5,20,5), 26)), ordered = T)]
 
