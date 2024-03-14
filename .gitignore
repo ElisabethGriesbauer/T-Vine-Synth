@@ -2,3 +2,5 @@
 .Rhistory
 output/*
 !output/.gitkeep
+figures/*.png
+!figures/.gitkeep
