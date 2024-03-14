@@ -3,6 +3,7 @@ library(dplyr)
 library(corrplot)
 library(ggplot2)
 library(data.table)
+library(rvinecopulib)
 
 
 real_data <- read.csv("./data/preprocessed/real_support2_small.csv")
