@@ -4,8 +4,9 @@
 
 
 ### Usage
-- Set up a conda env "attack_env" from the requirements.txt file for the privacy attacks and activate it.
-- Execute main.sh for installing necessary R packages, data preprocessing, privacy evaluation on vines and saving privacy results as .csv.
-- Run executable.Rmd to obtain utility evaluation and plots: privacy, utility, privacy-utility.
+- Set up a conda env `attack_env` from the `requirements.txt` file for the privacy attacks and activate it.
+- Execute `main.sh` for installing necessary R packages, data preprocessing, privacy evaluation on vines and saving privacy results as .csv.
+- Run `executable.Rmd` to obtain utility evaluation and privacy, utility and privacy-utility plots.
+- Execute `corr_plots_simulated_real_data.R` and `corr_plots_support2.R` to obtain correlation plots on real and synthetic data respectively.
 
 ### Cite
