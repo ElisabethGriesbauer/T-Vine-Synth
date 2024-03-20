@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SESSION="MIA"
-CONDA_ENV="test2"
+CONDA_ENV="attack_env"
 
 # Vector of window indices
 window_indices=(1 5 10 15 20 26)
