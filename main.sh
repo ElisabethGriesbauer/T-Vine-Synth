@@ -4,6 +4,9 @@ Rscript install_packages.R
 # preprocess raw support2 data
 Rscript preprocess_raw_support2.R
 
+# find order O^* of covariates
+Rscript find_covariate_order.R
+
 # run attribute inference attack
 ./AIA.sh
 
