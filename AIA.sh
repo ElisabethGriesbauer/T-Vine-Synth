@@ -3,6 +3,8 @@
 SESSION="AIA"
 CONDA_ENV="attack_env"
 
+printf "AIA evaluation running ... Type \"tmux a -t AIA\" to attach to AIA tmux session. \n"
+
 # Vector of window indices
 window_indices=(1 5 10 15 20 26)
 
@@ -19,7 +21,7 @@ for index in "${window_indices[@]}"; do
     tmux send-keys -t $SESSION:$index "conda activate $CONDA_ENV" Enter
 
     # Execute the command with the running index substituted
-    command="python ./synthetic_data_release/inference_cli.py -D ./data/real_support2_small -RC ./tests/inference/runconfig_totcst_50_0126_trunc${index}.json -O ./output/inference_realsupport2_small_totcstOutlier_trunc${index}"
+    command="time python ./synthetic_data_release/inference_cli.py -D ./data/real_support2_small -RC ./tests/inference/runconfig_totcst_50_0126_trunc${index}.json -O ./output/inference_realsupport2_small_totcstOutlier_trunc${index}"
 
     # Run the command in the pane and wait for it to finish
     tmux send-keys -t $SESSION:$index "$command; tmux wait -S Window${index}_done" Enter
@@ -32,7 +34,7 @@ for index in "${window_indices[@]}"; do
 done
 
 # Kill tmux session
-tmux kill-session -t $SESSION
+# tmux kill-session -t $SESSION
 
 # Exit with success code
 echo "AIA finished"
