@@ -334,67 +334,104 @@ ggsave(filename = name, width = 25, height = 5, units = "in", bg = "white", limi
 ## Reading Attribute Inference Attack Results Produced in Python
 
 ```{r}
+# sensitive attribute
+sa <- "totcst"
 
-after_trunc <- "_MSE"
+before_trunc <- paste0("output/inference_realsupport2_small_", sa, "Outlier_trunc", sep = "")
+after_trunc <- paste0("/reg_coeff_dict_keys(['", sa, "'])", sep = "")
+how_many <- 10*1*8*1*50 # no. game iterations x no. genModels x no. TargetID x no. SensitiveAttribute x p_synth
+N <- 10 # no. game iterations
 trunc_levels <- c("1", paste(seq(5,20,5)), "26")
-d <- dim(real_data)[2] - 1
-how_many <- 10*1*8*3 # nIter x no. genModels x no. TargetID x no. SensitiveAttribute
 
 
-reading <- function(before_trunc, after_trunc, trunc_levels, how_many){
-  results <- cbind( fread(paste0(before_trunc, trunc_levels[1], after_trunc, ".csv", sep = "")), "trunc" = rep(trunc_levels[1], how_many))
+
+reading <- function(before_trunc, after_trunc, truncs, how_many, no_gameit = N){
+  gi <- rep(1:no_gameit, each = how_many/no_gameit)
+  results <- cbind( fread(paste0(before_trunc, truncs[1], after_trunc, ".csv", sep = ""), header = T), "trunc" = rep("1", how_many), "gameIt" = gi)
   
-  for (i in trunc_levels[2:(length(trunc_levels)-1)]){
-    results <- rbind(results, cbind( fread(paste0(before_trunc, i, after_trunc, ".csv", sep = "")), "trunc" = rep(i, how_many)))
+  for (i in truncs[2:(length(truncs)-1)]){
+    results <- rbind(results, cbind( fread(paste0(before_trunc, i, after_trunc, ".csv", sep = ""), header = T), "trunc" = rep(paste(i), how_many), "gameIt" = gi))
   }
   
-  results = rbind(results, cbind( fread(paste0(before_trunc, trunc_levels[length(trunc_levels)], after_trunc, ".csv", sep = "")), "trunc" = rep("none", how_many)))
+  results = rbind(results, cbind( fread(paste0(before_trunc, truncs[length(truncs)], after_trunc, ".csv", sep = ""), header = T), "trunc" = rep("none", how_many), "gameIt" = gi))
   return(results)
 }
 ```
 
 ```{r}
-resultsVines <- reading(before_trunc = "output/results_inference_realsupport2_small_totcst_50_0126_trunc", after_trunc = after_trunc, trunc_levels = trunc_levels, how_many = how_many)
+betas <- reading(before_trunc = before_trunc, after_trunc = after_trunc, truncs = trunc_levels, how_many = how_many, no_gameit = N)
 ```
 
 ```{r}
-factors = c("Dataset", "SensitiveAttribute", "TargetModel")
-resultsVines[ , (factors) := lapply(.SD, factor, ordered = T), .SDcols = factors]
-resultsVines[ , TargetID := factor(TargetID, levels = resultsVines[, unique(TargetID)], ordered = T)]
-resultsVines[ , trunc := factor(trunc, levels = c("1", paste(seq(5,20,5)), "none"), ordered = T)]
+# prepare data for plotting
 
+factors = c("sa", "gameIt")
+betas[ , (factors) := lapply(.SD, factor, ordered = T), .SDcols = factors]
 rm(factors)
+betas[ , trunc := factor(trunc, levels = c("1", paste(seq(5,20,5)), "none"), ordered = T)]
+
+# remove intercept
+betas[, ':='(b0 = NULL, genModel = NULL, sa = NULL, tid = NULL)]
+
+betas_long <- melt(betas, id.vars = c('trunc', 'gameIt'))
+
+MAB <- betas_long[, mean(abs(value)), by = .(trunc, gameIt)]
+med <- MAB[, .(median(V1)), by = .(trunc)]
+WCAB <- betas_long[, max(abs(value)), by = .(trunc)]
+```
 
 
-## sample average targets
-set.seed(1234567)
-sampled_targets <- sample(1:dim(real_data)[1], 4, replace = F)
-sampled_targets <- sampled_targets[order(sampled_targets)] # ordering them by hand
+```{r}
+# plotting parameters
+mbcomp <- 0.5
+mbCvine <- 0.5
+xPB <- TeX(r'($\epsilon$)')
+xCvine <- "truncation level"
+axisCTTV <- element_text(size=20)
+axisCPB <- element_text(size=30)
+ytext <- TeX(r'($MAB_{totcst}$)') 
+ytext_WC <- TeX(r'($WCAB_{totcst}$)')
+tm <- 0.5
 
-resultsVines[, "sampled" := (TargetID %in% paste0("ID", sampled_targets -1, sep = ""))]
 
 
-subres = resultsVines[TargetModel == "Cvine"]
-med <- subres[, .(median(MSEsIn)), by = .(sampled, trunc)]
 
-
-ggplot(med, aes(x = trunc, y = V1)) +
-  labs(x ="truncation level", y = TeX(r'($MSE_S(x_{t,s} | s_t = 1)$)'), fill = 'target observation') +
+# MAB plot
+ggplot(MAB, aes(x = trunc, y = V1)) +
+  labs(x =xCvine, y = ytext) +
   guides(colour = "none") +
   theme_minimal() +
   theme(text = element_text(size = 30), legend.position = "left",
         legend.box = "vertical", plot.caption = element_text(hjust = 0),
-        axis.text.x = element_text(size=30),
+        axis.text.x = axisCPB,
         axis.text.y = element_text(size=30),
         legend.text = element_text(size = 30),
-        plot.margin=unit(c(0.5,0,0.5,0), 'cm')) +
-  geom_path(data = med, aes(x = trunc, y = V1, group = sampled, colour = sampled), linewidth = 1) +
-  geom_boxplot(data = subres, aes(y = MSEsIn, group = interaction(trunc, sampled), fill = sampled), width = 0.7, size = 1, position=position_dodge(0.8), alpha = 0.8) +
+        plot.margin=unit(c(tm,0,mbCvine,0), 'cm')
+  ) +
+  geom_boxplot(aes(y = V1, group = trunc), width = 0.5, fill = '#0099FF', size = 1, position=position_dodge(0.6), alpha = 0.8) +
+  geom_path(data = med, aes(x = trunc, y = V1, group = 1), linewidth = 1) +
   scale_x_discrete(labels = c("1", paste(seq(5,20,5)), 'no')) +
-  scale_fill_manual(labels = c("outlier", "randomly sampled"), values = c('#FF6633', '#0099FF')) +
-  scale_color_manual(labels = c("outlier", "randomly sampled"), values = c('#FF6633', '#0099FF')) +
-  scale_y_continuous(breaks = seq(from = 0, to = 25, by = 5), limits = c(0, 25)) +
+  scale_y_continuous(breaks = seq(from = 0.04, to = 0.1, by = 0.02), limits = c(0.03, 0.1)) +
   panel_border()
+
+# WCAB plot
+ggplot(WCAB, aes(x = trunc, y = V1)) +
+  labs(x =xCvine, y = ytext_WC) +
+  guides(colour = "none") +
+  theme_minimal() +
+  theme(text = element_text(size = 30), legend.position = "left",
+        legend.box = "vertical", plot.caption = element_text(hjust = 0),
+        axis.text.x = axisCPB,
+        axis.text.y = element_text(size=30),
+        legend.text = element_text(size = 30),
+        plot.margin=unit(c(tm,0,mbCvine,0), 'cm')
+  ) +
+  geom_path(group = 1, linewidth = 1) +
+  geom_point(size = 7, color = '#0099FF') +
+  scale_x_discrete(labels = c("1", paste(seq(5,20,5)), 'no')) +
+  scale_y_continuous(breaks = seq(from = 0.4, to = 1.4, by = 0.2), limits = c(0.35, 1.42)) +
+  panel_border()
+
 ```
 
 
