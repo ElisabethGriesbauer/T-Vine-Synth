@@ -1,7 +1,6 @@
 ---
 title: "execute"
 author: "anonymous"
-date: "2024-02-01"
 output: pdf_document
 ---
 
@@ -59,9 +58,6 @@ factor_position <- c(d)
 vine_estimation <- "par"
 
 
-# the covariate ordering was already prepared in the pre-processing step of the 
-## SUPPORT2 data: Y has to be on the last index, the order corresponds to the
-## column names
 attribute_names <- colnames(real_data)
 
 # preparing real data and test data
@@ -115,7 +111,7 @@ rm(factor_position, vine_estimation, attribute_names)
 
 ## Evaluating the Utility of C-vine Generated Synthetic Data with a Random Forest Classifier
 
-```{r}
+```{r, echo = F}
 set.seed(4562)
 utility_per_trunc <- list()
 for (t in 1:length(list_synth_data)){
@@ -180,7 +176,7 @@ gCvine
 
 ## Evaluating the Utility of PrivBayes Generated Synthetic Data with a Random Forest Classifier
 
-```{r}
+```{r, echo = F}
 synth_data_competitors <- list()
 
 # reading in PrivBayes synthetic data generated beforehand in python
@@ -253,7 +249,7 @@ gPB
 
 ## Evaluating the Utility of CTGAN and TVAE Generated Synthetic Data with a Random Forest Classifier
 
-```{r}
+```{r, echo = F}
 # reading in PrivBayes synthetic data generated beforehand in python
 synth_data_ctgan <- read.csv("./data/synthdata_utility_competitors/synth_data_CTGAN_real_support2_small.csv")
 synth_data_tvae <- read.csv("./data/synthdata_utility_competitors/synth_data_TVAE_real_support2_small.csv")
@@ -329,7 +325,7 @@ plot_grid(
   label_y = 1
 )
 
-name <- paste0("./figures/utility_realsupport2_small_CvinePrivBayesCTGANTVAE_randForest_AUC_icml", ".png", sep = "")
+name <- paste0("./figures/utility_realsupport2_small_CvinePrivBayesCTGANTVAE_randForest_AUC", ".png", sep = "")
 ggsave(filename = name, width = 25, height = 5, units = "in", bg = "white", limitsize = F)
 ```
 
