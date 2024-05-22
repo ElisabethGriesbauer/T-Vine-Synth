@@ -4,3 +4,5 @@ output/*
 !output/.gitkeep
 figures/*.png
 !figures/.gitkeep
+**/.DS_Store
+.DS_Store
