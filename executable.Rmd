@@ -474,7 +474,7 @@ desired_model_order <- c(unique(dfCvine$model))
 ggplot(data = dfCvine, aes(x=utility, y=privAIA, color = factor(model, ordered = T))) +
   geom_point(size = 5) +
   geom_path(group=1, color = "grey", size = 1) +
-  # scale_y_continuous(breaks = seq(from = 0, to = 4.5, by = 0.5), limits = c(0, 4.7)) +
+  scale_y_continuous(breaks = seq(from = 0.04, to = 0.08, by = 0.01), limits = c(0.039, 0.081)) +
   scale_x_continuous(breaks = seq(from = 0.66, to = 0.69, by = 0.01), limits = c(0.66, 0.694)) +
   # scale_color_manual(values = color_palette_cvine) +
   theme_minimal() +
