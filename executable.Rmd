@@ -438,31 +438,35 @@ ggplot(WCAB, aes(x = trunc, y = V1)) +
 # PRIVACY-UTILITY
 ## Privacy-Utility Plot
 ```{r}
-#rearranging
+# df for plotting
+dfCvine <- as.data.frame(matrix(, nrow = length(trunc_levels), ncol = 3))
+colnames(dfCvine) <- c("utility", "privAIA", "model")
+
+# rearranging and summarizing utility results
 resultsCvine <- resultsCvine %>% as.data.table()
 resultsCvine[, trunc := factor(trunc, levels = paste(c(1, seq(5,20,5), 26)), ordered = T)]
 
 subdf <- resultsCvine[resultsCvine$model == "Cvine",]
 med <- summaryBy(AUC_synth ~ (trunc), data = subdf, FUN = list(median)) %>% as.data.frame()
 
-dfCvine <- as.data.frame(matrix(, nrow = length(trunc_levels), ncol = 4))
-colnames(dfCvine) <- c("utility", "privAIA", "privMIA", "model")
-
 # utility results to plotting df
 dfCvine$utility <- med$AUC_synth.median
 dfCvine$model <- paste0("Cvine_", med$trunc, sep = "")
 
 # AIA results to plotting df
-med <- subres[, .(median(MSEsIn)), by = .(sampled, trunc)]
-dfCvine$privAIA <- med$V1[med$sampled == F]
+med <- MAB[, .(median(V1)), by = .(trunc)]
+dfCvine$privAIA <- med$V1
 
 
 dfCvine$utility <- dfCvine$utility %>% as.numeric()
 dfCvine$privAIA <- dfCvine$privAIA %>% as.numeric()
-dfCvine$privMIA <- dfCvine$privMIA %>% as.numeric()
 dfCvine$model <- factor(dfCvine$model, ordered = T, levels = unique(dfCvine$model) )
 
-color_palette_cvine <- c(brewer.pal(7, "Blues")[2:7])
+# leave out un-truncated vine as last tree should not be included
+dfCvine <- dfCvine[-6, ]
+
+# colors per model in plot
+color_palette_cvine <- c(brewer.pal(7, "Blues")[3:7])
 desired_model_order <- c(unique(dfCvine$model))
 
 
@@ -470,13 +474,13 @@ desired_model_order <- c(unique(dfCvine$model))
 ggplot(data = dfCvine, aes(x=utility, y=privAIA, color = factor(model, ordered = T))) +
   geom_point(size = 5) +
   geom_path(group=1, color = "grey", size = 1) +
-  scale_y_continuous(breaks = seq(from = 0, to = 4.5, by = 0.5), limits = c(0, 4.7)) +
-  scale_x_continuous(breaks = seq(from = 0.67, to = 0.69, by = 0.01), limits = c(0.67, 0.694)) +
+  # scale_y_continuous(breaks = seq(from = 0, to = 4.5, by = 0.5), limits = c(0, 4.7)) +
+  scale_x_continuous(breaks = seq(from = 0.66, to = 0.69, by = 0.01), limits = c(0.66, 0.694)) +
   # scale_color_manual(values = color_palette_cvine) +
   theme_minimal() +
   panel_border() +
   scale_color_manual(values = color_palette_cvine, limits = unique(dfCvine$model), labels = c( paste0( "Cvine trunc ", c(1,seq(5,20,5))), "Cvine no trunc")) +
-  labs(x = "utility (AUC)", y = "AIA privacy (MSE)", color = "Model:") +
+  labs(x = "utility (AUC)", y = "AIA privacy (MAB)", color = "Model:") +
   # guides(colour = "none") +
   theme_minimal() +
   theme(text = element_text(size = 30), legend.position = "left",
