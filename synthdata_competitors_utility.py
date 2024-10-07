@@ -3,7 +3,7 @@ sys.path.append('./synthetic_data_release')
 
 from synthetic_data_release.utils.datagen import load_local_data_as_df
 import numpy as np
-from synthetic_data_release.generative_models.data_synthesiser import PrivBayes
+from synthetic_data_release.generative_models.data_synthesiser import PrivBayes, PrivPGD
 from synthetic_data_release.generative_models.ctganSDV import CTGAN
 from synthetic_data_release.generative_models.tvae import TVAE
 import random
@@ -44,3 +44,11 @@ tvae.fit(rawPop)
 synth_data_tvae = tvae.generate_samples(50*rawPop.shape[0])
 synth_data_tvae.to_csv("./data/synthdata_utility_competitors/synth_data_TVAE_real_support2_small.csv", index=False)
 
+
+# PrivPGD
+import os; os.chdir('./synthetic_data_release')
+random.seed(180)
+privpgd = PrivPGD(metadata=metadata, savedir='data')
+privpgd.fit(rawPop)
+synth_data_privpgd = privpgd.generate_samples(50*rawPop.shape[0])
+synth_data_privpgd.to_csv("../data/synthdata_utility_competitors/synth_data_PrivPGD_real_support2_small.csv", index=False)
