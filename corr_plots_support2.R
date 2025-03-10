@@ -4,6 +4,7 @@ library(corrplot)
 library(ggplot2)
 library(data.table)
 library(rvinecopulib)
+library(svglite)
 
 
 real_data <- read.csv("./data/preprocessed/real_support2_small.csv")
@@ -77,16 +78,26 @@ for (t in 1:length(trunc_levels)) {
     synth_data[, (x) := quantile(real_data[[x]], probs = u_synth[[x]], type = 3)]
   }
   
-  name <- paste0("./figures/estKendallstau_synthdata_Cvine_trunc", trunc_levels[t], "_support2Small.png", sep = "")
-  png(name)
-  corrplot(cor(synth_data[, ..numerics], method = "kendall"), method="color")
-  dev.off()
+  name <- paste0("./figures/estKendallstau_synthdata_Cvine_trunc", trunc_levels[t], "_support2Small.svg", sep = "")
+  # png(name)
+  # corrplot(cor(synth_data[, ..numerics], method = "kendall"), method="color")
+  # dev.off()
+  
+  cor_matrix <- cor(synth_data[, ..numerics], method = "kendall")
+  cor_matrix <- apply(cor_matrix, 2, rev)
+  g <-ggcorrplot(t(cor_matrix), outline.col = "white")
+  ggsave(name, height=8)
   
 }
 
 
-name <- paste0("./figures/estKendallstau_realsupport2Small.png", sep = "")
-png(name)
-corrplot(cor(real_data[, ..numerics], method = "kendall"), method="color")
-dev.off()
+name <- paste0("./figures/estKendallstau_realsupport2Small.svg", sep = "")
+# png(name)
+# corrplot(cor(real_data[, ..numerics], method = "kendall"), method="color")
+# dev.off()
+
+cor_matrix <- cor(real_data[, ..numerics], method = "kendall")
+cor_matrix <- apply(cor_matrix, 2, rev)
+g <-ggcorrplot(t(cor_matrix), outline.col = "white")
+ggsave(name, height=8)
 
