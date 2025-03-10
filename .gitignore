@@ -3,6 +3,7 @@
 output/*
 !output/.gitkeep
 figures/*.png
+figures/*.svg
 !figures/.gitkeep
 **/.DS_Store
 .DS_Store
