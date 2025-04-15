@@ -11,3 +11,9 @@
 - Execute `corr_plots_simulated_real_data.R` and `corr_plots_support2.R` to obtain correlation plots on real and synthetic data for simulated and real-world data.
 
 ### Cite
+@article{griesbauer2025tvinesynth,
+  title={TVineSynth: A Truncated C-Vine Copula Generator of Synthetic Tabular Data to Balance Privacy and Utility},
+  author={Griesbauer, Elisabeth and Czado, Claudia and Frigessi, Arnoldo and Haff, Ingrid Hob{\ae}k},
+  journal={arXiv preprint arXiv:2503.15972},
+  year={2025}
+}
