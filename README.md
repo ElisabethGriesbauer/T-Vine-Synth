@@ -1,6 +1,6 @@
-# T-Vine-Synth: A Truncated C-Vine Copula Generator of Synthetic Tabular Data to Balance Privacy and Utility
+# TVineSynth: A Truncated C-Vine Copula Generator of Synthetic Tabular Data to Balance Privacy and Utility
 
- This repository accompanies the paper "T-Vine-Synth: A Truncated C-Vine Copula Generator of Synthetic Tabular Data to Balance Privacy and Utility".
+ This repository accompanies the paper "TVineSynth: A Truncated C-Vine Copula Generator of Synthetic Tabular Data to Balance Privacy and Utility".
 
 
 ### Usage
